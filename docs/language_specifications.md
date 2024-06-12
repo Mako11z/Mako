@@ -15,7 +15,7 @@
 Describe the main features of your language, such as:
 
 - Variable declarations
-  - [Data Type] [Variable Name] = [Value]
+  - Syntax: [Data Type] [Variable Name] = [Value];
 - Arithmetic operations
   - Multiply '\*'
   - Divide '/'
@@ -23,17 +23,51 @@ Describe the main features of your language, such as:
   - Subtract '-'
   - Module '%'
 - Print statements
-  - print()
+  - Syntax: print()
 - Data types
-  - string
+  - string (sequence of characters)
   - float
   - int
-  - char
-  - bool
+  - char (single character)
+  - bool (true or false)
 - Expressions and statements
+  - Operations and assignments
 
 ## Syntax Rules
 
-Define the syntax rules for your language. This can be done using BNF or EBNF notation.
+<variable_declaration> ::= <data_type> <identifier> "=" <expression> ";"
+<data_types> : "int" | "float" | "string" | "char" | "bool"
+<identifier> : Must start with a character (upper case or lower) and can be followed by special characters
+<literal> : <integer_literal> | <float_literal> | <string_literal> | <char_literal> | <bool_literal>
+<integer_literal> : [0-9]
+<float_literal> : [0-9] "." [0-9]
+<string_literal> : " a-zA-Z0-9... "
+<char_literal> : ' a-zA-Z0-9 '
+<bool_literal> : "true" | "false"
 
-### Variable Declarations
+## Keywords
+
+- int
+- string
+- float
+- char
+- bool
+- print
+- for
+- if
+- else
+
+## Operators
+
+- '+' (addition)
+- '-' (subtraction)
+- '\*' (multiplication)
+- '/' (division)
+- '%' (module)
+- '=' (assignment)
+
+## Punctuation
+
+- ';'
+- '(' and ')'
+- '{' and '}'
