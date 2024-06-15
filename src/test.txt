@@ -1,2 +1,6 @@
-int i = 0;
-float hey =     5;
+if (hey < 5) {
+    int test;
+} else {
+    int x = 6;
+}
+int testing    = 2;

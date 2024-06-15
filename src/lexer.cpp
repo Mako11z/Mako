@@ -12,6 +12,8 @@ enum class TokenType
     Literal,
     Operator,
     Punctuation,
+    ComparisonOperator,
+    AssignmentOperator,
 };
 
 enum class LexerState
@@ -67,9 +69,19 @@ public:
                     buffer = current;
                     state = LexerState::Number;
                 }
-                else if (current == '*' || current == '-' || current == '+' || current == '/' || current == '%' || current == '=')
+                else if (current == '*' || current == '-' || current == '+' || current == '/' || current == '%')
                 {
                     tokens.push_back({TokenType::Operator, std::string(1, current)});
+                }
+                else if (current == '=')
+                {
+                    handleAssignmentOperator(current, tokens, file);
+                    // tokens.push_back({ TokenType::AssignmentOperator, std::string(1, current) });
+                }
+                else if (current == '>' || current == '<' || current == '!')
+                {
+                    handleComparisonOperator(current, tokens, file);
+                    // tokens.push_back({ TokenType::ComparisonOperator, std::string(1, current) });
                 }
                 else if (current == '(' || current == ')' || current == '{' || current == '}' || current == ';')
                 {
@@ -145,7 +157,51 @@ public:
 private:
     LexerState state;
     std::string fileName, buffer;
-    std::set<std::string> keywords = {"int", "float", "string", "char"};
+    std::set<std::string> keywords = {"int", "float", "string", "char", "if", "else", "for", "while"};
+    void handleAssignmentOperator(char current, std::vector<Token> &tokens, std::ifstream &file)
+    {
+        char next;
+        // Check if there a next character
+        if (file.get(next))
+        {
+            // Check for '==' conditional
+            if (next == '=')
+            {
+                tokens.push_back({TokenType::ComparisonOperator, "=="});
+            }
+            else
+            {
+                // We did not find it was a conditional so its a assignment operator '='
+                tokens.push_back({TokenType::AssignmentOperator, std::string(1, current)});
+                // Reprocess the character
+                file.unget();
+            }
+        }
+        else
+        {
+            tokens.push_back({TokenType::AssignmentOperator, std::string(1, current)});
+        }
+    }
+    void handleComparisonOperator(char current, std::vector<Token> &tokens, std::ifstream &file)
+    {
+        char next;
+        if (file.get(next))
+        {
+            if (next == '=')
+            {
+                tokens.push_back({TokenType::ComparisonOperator, std::string(1, current) + next});
+            }
+            else
+            {
+                tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
+                file.unget();
+            }
+        }
+        else
+        {
+            tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
+        }
+    }
 };
 
 int main()
@@ -172,6 +228,12 @@ int main()
             break;
         case TokenType::Punctuation:
             std::cout << "Punctuation: ";
+            break;
+        case TokenType::ComparisonOperator:
+            std::cout << "Comparison Operator: ";
+            break;
+        case TokenType::AssignmentOperator:
+            std::cout << "Assignment Operator: ";
             break;
         }
         // Print token value
