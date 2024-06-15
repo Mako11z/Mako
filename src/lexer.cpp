@@ -199,6 +199,7 @@ private:
         }
         else
         {
+            // Cases like single '!', '<', '>.
             tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
         }
     }
