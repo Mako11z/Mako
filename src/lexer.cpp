@@ -53,7 +53,11 @@ public:
         {
             if (state == LexerState::Initial)
             {
-                if (isalpha(current))
+                if (isspace(current))
+                {
+                    continue;
+                }
+                else if (isalpha(current))
                 {
                     buffer = current;
                     state = LexerState::Identifier;
