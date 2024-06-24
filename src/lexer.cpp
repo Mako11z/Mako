@@ -16,15 +16,6 @@ enum class TokenType
     AssignmentOperator,
 };
 
-enum class LexerState
-{
-    Initial,
-    Identifier,
-    Number,
-    Operator,
-    Punctuation,
-};
-
 struct Token
 {
     TokenType type;
@@ -36,7 +27,6 @@ class Lexer
 public:
     Lexer(std::string &fileName)
     {
-        state = LexerState::Initial;
         this->fileName = fileName;
     }
 
@@ -53,89 +43,20 @@ public:
         char current;
         while (file.get(current))
         {
-            if (state == LexerState::Initial)
+            if (isspace(current))
             {
-                if (isspace(current))
-                {
-                    continue;
-                }
-                else if (isalpha(current))
-                {
-                    buffer = current;
-                    state = LexerState::Identifier;
-                }
-                else if (isdigit(current))
-                {
-                    buffer = current;
-                    state = LexerState::Number;
-                }
-                else if (current == '*' || current == '-' || current == '+' || current == '/' || current == '%')
-                {
-                    tokens.push_back({TokenType::Operator, std::string(1, current)});
-                }
-                else if (current == '=')
-                {
-                    handleAssignmentOperator(current, tokens, file);
-                    // tokens.push_back({ TokenType::AssignmentOperator, std::string(1, current) });
-                }
-                else if (current == '>' || current == '<' || current == '!')
-                {
-                    handleComparisonOperator(current, tokens, file);
-                    // tokens.push_back({ TokenType::ComparisonOperator, std::string(1, current) });
-                }
-                else if (current == '(' || current == ')' || current == '{' || current == '}' || current == ';')
-                {
-                    tokens.push_back({TokenType::Punctuation, std::string(1, current)});
-                }
-                else
-                {
-                    state = LexerState::Initial;
-                }
+                continue;
             }
-
-            else if (state == LexerState::Identifier)
+            else if (isalpha(current) || current == '_')
             {
-                if (isalnum(current) || current == '_')
+                buffer = current;
+                char next = file.peek();
+                while (isalpha(next) || isdigit(next) || next == '_')
                 {
+                    file.get(current);
                     buffer += current;
+                    next = file.peek();
                 }
-                else
-                {
-                    if (keywords.find(buffer) != keywords.end())
-                    {
-                        tokens.push_back({TokenType::keyword, buffer});
-                    }
-                    else
-                    {
-                        tokens.push_back({TokenType::Identifier, buffer});
-                    }
-                    buffer.clear();
-                    state = LexerState::Initial;
-                    // Put that character back into the stream to be processed
-                    file.unget();
-                }
-            }
-
-            else if (state == LexerState::Number)
-            {
-                if (isdigit(current))
-                {
-                    buffer += current;
-                }
-                else
-                {
-                    tokens.push_back({TokenType::Literal, buffer});
-                    buffer.clear();
-                    state = LexerState::Initial;
-                    // Put that character back into the stream to be processed
-                    file.unget();
-                }
-            }
-        }
-        if (!buffer.empty())
-        {
-            if (state == LexerState::Identifier)
-            {
                 if (keywords.find(buffer) != keywords.end())
                 {
                     tokens.push_back({TokenType::keyword, buffer});
@@ -144,10 +65,54 @@ public:
                 {
                     tokens.push_back({TokenType::Identifier, buffer});
                 }
+                buffer.clear();
             }
-            else if (state == LexerState::Number)
+            else if (isdigit(current))
             {
+                buffer = current;
+                char next = file.peek();
+                while (isdigit(next))
+                {
+                    file.get(current);
+                    buffer += current;
+                    next = file.peek();
+                }
                 tokens.push_back({TokenType::Literal, buffer});
+                buffer.clear();
+            }
+            else if (current == '*' || current == '-' || current == '+' || current == '/' || current == '%')
+            {
+                tokens.push_back({TokenType::Operator, std::string(1, current)});
+            }
+            else if (current == '=')
+            {
+                char next = file.peek();
+                if (next == '=')
+                {
+                    file.get();
+                    tokens.push_back({TokenType::ComparisonOperator, "=="});
+                }
+                else
+                {
+                    tokens.push_back({TokenType::AssignmentOperator, "="});
+                }
+            }
+            else if (current == '>' || current == '<' || current == '!')
+            {
+                char next = file.peek();
+                if (next == '=')
+                {
+                    tokens.push_back({TokenType::ComparisonOperator, std::string(1, current) + '='});
+                    file.get();
+                }
+                else
+                {
+                    tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
+                }
+            }
+            else if (current == '(' || current == ')' || current == '{' || current == '}' || current == ';')
+            {
+                tokens.push_back({TokenType::Punctuation, std::string(1, current)});
             }
         }
         file.close();
@@ -155,54 +120,8 @@ public:
     }
 
 private:
-    LexerState state;
     std::string fileName, buffer;
     std::set<std::string> keywords = {"int", "float", "string", "char", "if", "else", "for", "while"};
-    void handleAssignmentOperator(char current, std::vector<Token> &tokens, std::ifstream &file)
-    {
-        char next;
-        // Check if there a next character
-        if (file.get(next))
-        {
-            // Check for '==' conditional
-            if (next == '=')
-            {
-                tokens.push_back({TokenType::ComparisonOperator, "=="});
-            }
-            else
-            {
-                // We did not find it was a conditional so its a assignment operator '='
-                tokens.push_back({TokenType::AssignmentOperator, std::string(1, current)});
-                // Reprocess the character
-                file.unget();
-            }
-        }
-        else
-        {
-            tokens.push_back({TokenType::AssignmentOperator, std::string(1, current)});
-        }
-    }
-    void handleComparisonOperator(char current, std::vector<Token> &tokens, std::ifstream &file)
-    {
-        char next;
-        if (file.get(next))
-        {
-            if (next == '=')
-            {
-                tokens.push_back({TokenType::ComparisonOperator, std::string(1, current) + next});
-            }
-            else
-            {
-                tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
-                file.unget();
-            }
-        }
-        else
-        {
-            // Cases like single '!', '<', '>.
-            tokens.push_back({TokenType::ComparisonOperator, std::string(1, current)});
-        }
-    }
 };
 
 int main()
@@ -212,7 +131,6 @@ int main()
     std::vector<Token> tokens = lexer.tokenize();
     for (const Token &token : tokens)
     {
-        // Print token type
         switch (token.type)
         {
         case TokenType::keyword:
@@ -237,7 +155,6 @@ int main()
             std::cout << "Assignment Operator: ";
             break;
         }
-        // Print token value
         std::cout << token.value << std::endl;
     }
 }
