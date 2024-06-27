@@ -119,3 +119,9 @@ struct PrintNode : ASTNode
     std::string value_to_print;
     PrintNode(std::string &val) : ASTNode(ASTNodeType::Print), value_to_print(val) {}
 };
+
+class AST
+{
+public:
+private:
+};
