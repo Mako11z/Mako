@@ -41,8 +41,12 @@
     - This will be the right child
     - Attach the BinaryExpression as the right child of Assignmemt node
 */
+#ifndef PARSER_H
+#define PARSER_H
+
 #include <iostream>
 #include <string>
+#include "lexer.h"
 
 enum class ASTNodeType
 {
@@ -120,8 +124,15 @@ struct PrintNode : ASTNode
     PrintNode(std::string &val) : ASTNode(ASTNodeType::Print), value_to_print(val) {}
 };
 
-class AST
+class Parser
 {
 public:
+    Parser(std::vector<Token> &tokens) : tokens(tokens), current_index(0) {}
+    ASTNode *parse();
+
 private:
+    std::vector<Token> &tokens;
+    size_t current_index;
 };
+
+#endif

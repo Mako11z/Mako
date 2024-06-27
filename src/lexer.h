@@ -25,7 +25,7 @@ struct Token
 class Lexer
 {
 public:
-    Lexer(std::string &fileName);
+    Lexer(std::string &fileName) : fileName(fileName), keywords{"int", "float", "string", "char", "if", "else", "for", "while"} {}
     std::vector<Token> tokenize();
 
 private:

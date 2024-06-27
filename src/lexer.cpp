@@ -6,7 +6,6 @@
 #include <set>
 #include "lexer.h"
 
-Lexer::Lexer(std::string &fileName) : fileName(fileName), keywords{"int", "float", "string", "char", "if", "else", "for", "while"} {}
 std::vector<Token> Lexer::tokenize()
 {
     std::ifstream file(fileName);
@@ -14,6 +13,7 @@ std::vector<Token> Lexer::tokenize()
 
     if (!file.is_open())
     {
+        std::cerr << "File did not open " << fileName << std::endl;
         return tokens;
     }
 
@@ -92,6 +92,7 @@ std::vector<Token> Lexer::tokenize()
             tokens.push_back({TokenType::Punctuation, std::string(1, current)});
         }
     }
+
     file.close();
     return tokens;
 }
