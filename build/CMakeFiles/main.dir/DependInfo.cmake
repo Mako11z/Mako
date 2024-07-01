@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/Users/isaiah/Projects/Mako/src/lexer.cpp" "CMakeFiles/main.dir/src/lexer.cpp.o" "gcc" "CMakeFiles/main.dir/src/lexer.cpp.o.d"
   "/Users/isaiah/Projects/Mako/src/main.cpp" "CMakeFiles/main.dir/src/main.cpp.o" "gcc" "CMakeFiles/main.dir/src/main.cpp.o.d"
+  "/Users/isaiah/Projects/Mako/src/parser.cpp" "CMakeFiles/main.dir/src/parser.cpp.o" "gcc" "CMakeFiles/main.dir/src/parser.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

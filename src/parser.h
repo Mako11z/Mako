@@ -7,6 +7,7 @@
 
 enum class ASTNodeType
 {
+    Program,
     BinaryExpression,
     VariableDef,
     Literal,
@@ -24,11 +25,16 @@ struct ASTNode
     virtual ~ASTNode() = default;
 };
 
-struct VariableDef : ASTNode
+struct ProgramNode : ASTNode
+{
+    ProgramNode() : ASTNode(ASTNodeType::Program) {}
+};
+
+struct VariableDefNode : ASTNode
 {
     std::string data_type;
     std::string var_name;
-    VariableDef(std::string &type, std::string &name) : ASTNode(ASTNodeType::VariableDef), data_type(type), var_name(name) {}
+    VariableDefNode(std::string &type, std::string &name) : ASTNode(ASTNodeType::VariableDef), data_type(type), var_name(name) {}
 };
 
 struct BinaryExpressionNode : ASTNode
@@ -47,9 +53,9 @@ struct LiteralNode : ASTNode
     LiteralNode(std::string &val) : ASTNode(ASTNodeType::Literal), value(val) {}
 };
 
-struct AssignmemtNode : ASTNode
+struct AssignmentNode : ASTNode
 {
-    AssignmemtNode(ASTNode *l, ASTNode *r) : ASTNode(ASTNodeType::Assignment)
+    AssignmentNode(ASTNode *l, ASTNode *r) : ASTNode(ASTNodeType::Assignment)
     {
         children.push_back(l);
         children.push_back(r);
@@ -85,21 +91,16 @@ public:
 private:
     std::vector<Token> &tokens;
     size_t current_index;
-    Token peekToken()
-    {
-        if (current_index + 1 < tokens.size())
-        {
-            return tokens[current_index + 1];
-        }
-        else
-        {
-            return Token{TokenType::Punctuation, ""};
-        }
-    }
-    void advanceToken()
-    {
-        current_index++;
-    }
+    Token getCurrentToken();
+    Token peekToken();
+    void advanceToken();
+    bool checkForEndOfFile();
+    ASTNode *parseIfStatement();
+    ASTNode *parseVariableDef();
+    ASTNode *parseWhileLoop();
+    ASTNode *parseAssignment(VariableDefNode *);
+    ASTNode *parseLiteral();
+    ASTNode *parseBinaryExpression();
 };
 
 #endif

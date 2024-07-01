@@ -7,7 +7,7 @@
 
 enum class TokenType
 {
-    keyword,
+    Keyword,
     Identifier,
     Literal,
     Operator,

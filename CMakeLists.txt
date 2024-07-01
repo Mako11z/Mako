@@ -10,7 +10,7 @@ set(SRC_DIR ${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR})
 
 # Add executable target for your main.cpp
-add_executable(main ${SRC_DIR}/main.cpp ${SRC_DIR}/lexer.cpp)
+add_executable(main ${SRC_DIR}/main.cpp ${SRC_DIR}/lexer.cpp ${SRC_DIR}/parser.cpp)
 # Copy test.txt to build directory
 configure_file(${CMAKE_SOURCE_DIR}/src/test.txt ${CMAKE_BINARY_DIR}/test.txt COPYONLY)
 # Add a test for your lexer or parser
