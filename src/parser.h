@@ -8,13 +8,14 @@
 enum class ASTNodeType
 {
     Program,
-    BinaryExpression,
     VariableDef,
     Literal,
     IfStatement,
     WhileLoop,
     Assignment,
-    Print
+    Print,
+    ConditionalExpression,
+    ArithmicExpressions
 };
 
 struct ASTNode
@@ -30,21 +31,31 @@ struct ProgramNode : ASTNode
     ProgramNode() : ASTNode(ASTNodeType::Program) {}
 };
 
+struct ConditionalNode : ASTNode
+{
+    std::string operation;
+    ConditionalNode(const std::string &op, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ConditionalExpression)
+    {
+        children.push_back(left);
+        children.push_back(right);
+    }
+};
+
+struct ArithmicNode : ASTNode
+{
+    std::string operation;
+    ArithmicNode(const std::string op, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ArithmicExpressions)
+    {
+        children.push_back(left);
+        children.push_back(right);
+    }
+};
+
 struct VariableDefNode : ASTNode
 {
     std::string data_type;
     std::string var_name;
     VariableDefNode(std::string &type, std::string &name) : ASTNode(ASTNodeType::VariableDef), data_type(type), var_name(name) {}
-};
-
-struct BinaryExpressionNode : ASTNode
-{
-    std::string operation;
-    BinaryExpressionNode(std::string &op, ASTNode *l, ASTNode *r) : ASTNode(ASTNodeType::BinaryExpression), operation(op)
-    {
-        children.push_back(l);
-        children.push_back(r);
-    }
 };
 
 struct LiteralNode : ASTNode
@@ -55,10 +66,10 @@ struct LiteralNode : ASTNode
 
 struct AssignmentNode : ASTNode
 {
-    AssignmentNode(ASTNode *l, ASTNode *r) : ASTNode(ASTNodeType::Assignment)
+    AssignmentNode(ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::Assignment)
     {
-        children.push_back(l);
-        children.push_back(r);
+        children.push_back(left);
+        children.push_back(right);
     }
 };
 
@@ -100,7 +111,6 @@ private:
     ASTNode *parseWhileLoop();
     ASTNode *parseAssignment(VariableDefNode *);
     ASTNode *parseLiteral();
-    ASTNode *parseBinaryExpression();
 };
 
 #endif
