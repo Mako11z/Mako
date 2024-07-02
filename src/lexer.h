@@ -14,6 +14,7 @@ enum class TokenType
     Punctuation,
     ComparisonOperator,
     AssignmentOperator,
+    LogicalOperator,
 };
 
 struct Token
@@ -25,12 +26,12 @@ struct Token
 class Lexer
 {
 public:
-    Lexer(std::string &fileName) : fileName(fileName), keywords{"int", "float", "string", "char", "if", "else", "for", "while"} {}
+    Lexer(std::string &fileName) : fileName(fileName), keywords{"int", "float", "string", "char", "if", "else", "for", "while", "and", "or"} {}
     std::vector<Token> tokenize();
 
 private:
     std::string fileName, buffer;
-    std::set<std::string> keywords = {"int", "float", "string", "char", "if", "else", "for", "while"};
+    std::set<std::string> keywords = {"int", "float", "string", "char", "if", "else", "for", "while", "and", "or"};
 };
 
 #endif

@@ -7,47 +7,153 @@ ASTNode *Parser::parse()
 {
     ProgramNode *program = new ProgramNode();
     ASTNode *curr_node = NULL;
-    curr_node = parseVariableDef();
+    curr_node = parseWhileLoop();
     program->children.push_back(curr_node);
-    /*
-    while (current_index < tokens.size())
-    {
-        Token current_token = getCurrentToken();
-        ASTNode *curr_node = NULL;
-        if (current_token.type == TokenType::Keyword)
-        {
-            if (current_token.value == "float" || current_token.value == "int" || current_token.value == "string" || current_token.value == "char")
-            {
-                curr_node = parseVariableDef();
-            }
-            else if (current_token.value == "while")
-            {
-                curr_node = parseWhileLoop();
-            }
-            else if (current_token.value == "if")
-            {
-                curr_node = parseIfStatement();
-            }
-        }
-        else if (current_token.type == TokenType::Identifier)
-        {
-            curr_node = parseLiteral();
-        }
 
-        if (curr_node)
-        {
-            program->children.push_back(curr_node);
-        }
-        // We have reached the end of a statement
-        advanceToken();
-    }
-    */
     return program;
 }
 
 bool Parser::checkForEndOfFile()
 {
     return current_index > tokens.size();
+}
+
+bool Parser::checkForDefinedVar(const std::string &name)
+{
+    if (defined_variables.find(name) != defined_variables.end())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+ASTNode *Parser::parseWhileLoop()
+{
+    // Skip the 'while' keyword and check for nullptr
+    advanceToken();
+    if (checkForEndOfFile())
+    {
+        std::cout << "End of File after while keyword, expected '(' " << std::endl;
+        return nullptr;
+    }
+    Token current_token = getCurrentToken();
+    if (current_token.value != "(")
+    {
+        std::cout << "Syntax Error, Expected '(' " << std::endl;
+        return nullptr;
+    }
+    advanceToken();
+
+    WhileLoopNode *while_node = new WhileLoopNode();
+    // Loop until end of condition
+    current_token = getCurrentToken();
+    while (current_token.value != ")")
+    {
+        if (checkForEndOfFile())
+        {
+            std::cout << "End of file while parsing while loop" << std::endl;
+            delete while_node;
+            return nullptr;
+        }
+        ASTNode *condition = parseCondition();
+        if (condition == nullptr)
+        {
+            std::cout << "Error parsing condition in while loop \n";
+            delete while_node;
+            return nullptr;
+        }
+        while_node->conditions.push_back(condition);
+
+        current_token = getCurrentToken();
+        if (current_token.value == ")")
+        {
+            break;
+        }
+        else if (current_token.type == TokenType::LogicalOperator)
+        {
+            advanceToken();
+        }
+        else
+        {
+            delete while_node;
+            std::cout << "Expected a logical operator or ') \n";
+            return nullptr;
+        }
+        current_token = getCurrentToken();
+    }
+
+    return while_node;
+}
+
+// Parse a condition and grab the left operand, operator, and rigth operand
+ASTNode *Parser::parseCondition()
+{
+    Token current_token = getCurrentToken();
+    std::string op;
+    ASTNode *left_child = nullptr;
+
+    // Left child
+    if (current_token.type == TokenType::Identifier)
+    {
+        std::cout << current_token.value << std::endl;
+        left_child = new IdentifierNode(current_token.value);
+    }
+    else if (current_token.type == TokenType::Literal)
+    {
+        left_child = new LiteralNode(current_token.value);
+    }
+    else
+    {
+        std::cout << "Syntax Error: expected a identifier or literal \n";
+        return nullptr;
+    }
+
+    // Comparison
+    advanceToken();
+    if (checkForEndOfFile())
+    {
+        std::cout << "Syntax Error: end of file, expected a compare operator \n";
+        delete left_child;
+        return nullptr;
+    }
+    current_token = getCurrentToken();
+    if (current_token.type != TokenType::ComparisonOperator)
+    {
+        std::cout << "Syntax Error: expected a compare operator \n";
+        return nullptr;
+    }
+    std::cout << current_token.value << std::endl;
+    op = current_token.value;
+    std::cout << op << std::endl;
+    advanceToken();
+    if (checkForEndOfFile())
+    {
+        delete left_child;
+        std::cout << "End of File after operator, expected right-hand side of condition\n";
+        return nullptr;
+    }
+    current_token = getCurrentToken();
+    ASTNode *right_child = nullptr;
+    if (current_token.type == TokenType::Identifier)
+    {
+        right_child = new IdentifierNode(current_token.value);
+    }
+    else if (current_token.type == TokenType::Literal)
+    {
+        right_child = new LiteralNode(current_token.value);
+    }
+    else
+    {
+        delete left_child;
+        std::cout << "Syntax Error: Expected identifier or literal for the right-hand side of the condition.\n";
+        return nullptr;
+    }
+    advanceToken();
+    return new ConditionalNode(op, left_child, right_child);
+    ;
 }
 
 /*
@@ -62,7 +168,6 @@ ASTNode *Parser::parseVariableDef()
     std::string name;
 
     advanceToken();
-    current_token = getCurrentToken();
     if (checkForEndOfFile())
     {
         std::cout << "End of File after data type" << std::endl;
@@ -76,6 +181,8 @@ ASTNode *Parser::parseVariableDef()
     }
     // Set identifier
     name = current_token.value;
+    // Add to set of variables we have defined
+    defined_variables.insert(name);
 
     advanceToken();
     if (checkForEndOfFile())
@@ -97,17 +204,8 @@ ASTNode *Parser::parseVariableDef()
     std::cout << "Syntax Error: Expected ';' or '=' after variable declaration" << std::endl;
     return nullptr;
 }
-ASTNode *Parser::parseWhileLoop()
-{
 
-    return NULL;
-}
 ASTNode *Parser::parseIfStatement()
-{
-
-    return NULL;
-}
-ASTNode *Parser::parseLiteral()
 {
 
     return NULL;

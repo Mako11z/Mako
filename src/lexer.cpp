@@ -36,7 +36,14 @@ std::vector<Token> Lexer::tokenize()
             }
             if (keywords.find(buffer) != keywords.end())
             {
-                tokens.push_back({TokenType::Keyword, buffer});
+                if (buffer == "and" || buffer == "or")
+                {
+                    tokens.push_back({TokenType::LogicalOperator, buffer});
+                }
+                else
+                {
+                    tokens.push_back({TokenType::Keyword, buffer});
+                }
             }
             else
             {

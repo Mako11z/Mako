@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <set>
 #include "lexer.h"
 
 enum class ASTNodeType
@@ -11,11 +12,14 @@ enum class ASTNodeType
     VariableDef,
     Literal,
     IfStatement,
+    ElseStatement,
     WhileLoop,
     Assignment,
     Print,
     ConditionalExpression,
-    ArithmicExpressions
+    ArithmicExpressions,
+    BodyStatements,
+    Identifier,
 };
 
 struct ASTNode
@@ -31,14 +35,26 @@ struct ProgramNode : ASTNode
     ProgramNode() : ASTNode(ASTNodeType::Program) {}
 };
 
+struct BodyNode : ASTNode
+{
+    std::vector<ASTNode *> statements;
+    BodyNode() : ASTNode(ASTNodeType::BodyStatements) {}
+};
+
 struct ConditionalNode : ASTNode
 {
     std::string operation;
-    ConditionalNode(const std::string &op, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ConditionalExpression)
+    ConditionalNode(const std::string &op, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ConditionalExpression), operation(op)
     {
         children.push_back(left);
         children.push_back(right);
     }
+};
+
+struct IdentifierNode : ASTNode
+{
+    std::string name;
+    IdentifierNode(const std::string &id) : ASTNode(ASTNodeType::Identifier), name(id) {}
 };
 
 struct ArithmicNode : ASTNode
@@ -73,18 +89,25 @@ struct AssignmentNode : ASTNode
     }
 };
 
+struct ElseNode : ASTNode
+{
+    BodyNode *body;
+    ElseNode() : ASTNode(ASTNodeType::ElseStatement), body(nullptr) {}
+};
+
 struct IfStatementNode : ASTNode
 {
     std::vector<ASTNode *> conditions;
-    std::vector<ASTNode *> body;
-    IfStatementNode() : ASTNode(ASTNodeType::IfStatement) {}
+    BodyNode *body;
+    ASTNode *elseNode;
+    IfStatementNode() : ASTNode(ASTNodeType::IfStatement), body(nullptr), elseNode(nullptr) {}
 };
 
 struct WhileLoopNode : ASTNode
 {
     std::vector<ASTNode *> conditions;
-    std::vector<ASTNode *> body;
-    WhileLoopNode() : ASTNode(ASTNodeType::WhileLoop) {}
+    BodyNode *body;
+    WhileLoopNode() : ASTNode(ASTNodeType::WhileLoop), body(nullptr) {}
 };
 
 struct PrintNode : ASTNode
@@ -100,17 +123,21 @@ public:
     ASTNode *parse();
 
 private:
+    // Variables
     std::vector<Token> &tokens;
+    std::set<std::string> defined_variables;
     size_t current_index;
+    // Functions
     Token getCurrentToken();
     Token peekToken();
     void advanceToken();
     bool checkForEndOfFile();
+    bool checkForDefinedVar(const std::string &);
     ASTNode *parseIfStatement();
     ASTNode *parseVariableDef();
     ASTNode *parseWhileLoop();
     ASTNode *parseAssignment(VariableDefNode *);
-    ASTNode *parseLiteral();
+    ASTNode *parseCondition();
 };
 
 #endif

@@ -39,34 +39,101 @@ void printAST(ASTNode *node, int indent = 0)
             printAST(child, indent + 2);
         }
         break;
-    case ASTNodeType::BinaryExpression:
+    case ASTNodeType::IfStatement:
     {
-        BinaryExpressionNode *binaryExpr = dynamic_cast<BinaryExpressionNode *>(node);
-        std::cout << indentStr << "BinaryExpressionNode(operation: " << binaryExpr->operation << ")\n";
-        for (ASTNode *child : node->children)
+        IfStatementNode *ifNode = dynamic_cast<IfStatementNode *>(node);
+        std::cout << indentStr << "IfStatementNode\n";
+        std::cout << indentStr << "  Conditions:\n";
+        for (ASTNode *condition : ifNode->conditions)
         {
-            printAST(child, indent + 2);
+            printAST(condition, indent + 4);
+        }
+        if (ifNode->body)
+        {
+            std::cout << indentStr << "  Body:\n";
+            printAST(ifNode->body, indent + 4);
+        }
+        if (ifNode->elseNode)
+        {
+            std::cout << indentStr << "  Else:\n";
+            printAST(ifNode->elseNode, indent + 4);
         }
     }
     break;
-    case ASTNodeType::IfStatement:
-        std::cout << indentStr << "IfStatementNode\n";
-        for (ASTNode *child : node->children)
+    case ASTNodeType::ElseStatement:
+    {
+        ElseNode *elseNode = dynamic_cast<ElseNode *>(node);
+        std::cout << indentStr << "ElseNode\n";
+        if (elseNode->body)
         {
-            printAST(child, indent + 2);
+            std::cout << indentStr << "  Body:\n";
+            printAST(elseNode->body, indent + 4);
         }
-        break;
+    }
+    break;
     case ASTNodeType::WhileLoop:
+    {
+        WhileLoopNode *whileNode = dynamic_cast<WhileLoopNode *>(node);
         std::cout << indentStr << "WhileLoopNode\n";
-        for (ASTNode *child : node->children)
+        std::cout << indentStr << "  Conditions:\n";
+        for (ASTNode *condition : whileNode->conditions)
         {
-            printAST(child, indent + 2);
+            printAST(condition, indent + 4);
         }
-        break;
+        if (whileNode->body)
+        {
+            std::cout << indentStr << "  Body:\n";
+            printAST(whileNode->body, indent + 4);
+        }
+    }
+    break;
     case ASTNodeType::Print:
     {
         PrintNode *printNode = dynamic_cast<PrintNode *>(node);
         std::cout << indentStr << "PrintNode(value_to_print: " << printNode->value_to_print << ")\n";
+    }
+    break;
+    case ASTNodeType::ConditionalExpression:
+    {
+        ConditionalNode *condNode = dynamic_cast<ConditionalNode *>(node);
+        std::cout << indentStr << "ConditionalNode(operation: ";
+        if (!condNode->operation.empty())
+            std::cout << condNode->operation;
+        else
+            std::cout << "empty";
+        std::cout << ")\n";
+
+        std::cout << indentStr << "  Left:\n";
+        printAST(condNode->children[0], indent + 4);
+
+        std::cout << indentStr << "  Right:\n";
+        printAST(condNode->children[1], indent + 4);
+    }
+    break;
+    case ASTNodeType::ArithmicExpressions:
+    {
+        ArithmicNode *arithNode = dynamic_cast<ArithmicNode *>(node);
+        std::cout << indentStr << "ArithmicNode(operation: " << arithNode->operation << ")\n";
+        std::cout << indentStr << "  Left:\n";
+        printAST(arithNode->children[0], indent + 4);
+        std::cout << indentStr << "  Right:\n";
+        printAST(arithNode->children[1], indent + 4);
+    }
+    break;
+    case ASTNodeType::BodyStatements:
+    {
+        BodyNode *bodyNode = dynamic_cast<BodyNode *>(node);
+        std::cout << indentStr << "BodyNode\n";
+        for (ASTNode *statement : bodyNode->statements)
+        {
+            printAST(statement, indent + 2);
+        }
+    }
+    break;
+    case ASTNodeType::Identifier:
+    {
+        IdentifierNode *idNode = dynamic_cast<IdentifierNode *>(node);
+        std::cout << indentStr << "IdentifierNode(name: " << idNode->name << ")\n";
     }
     break;
     default:
@@ -108,6 +175,9 @@ int main()
             break;
         case TokenType::AssignmentOperator:
             std::cout << "Assignment Operator: ";
+            break;
+        case TokenType::LogicalOperator:
+            std::cout << "Logical Operator: ";
             break;
         }
         std::cout << token.value << std::endl;
