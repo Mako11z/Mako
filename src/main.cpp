@@ -149,39 +149,40 @@ int main()
 
     std::vector<Token> tokens = lexer.tokenize();
     Parser p = (tokens);
-
-    for (const Token &token : tokens)
-    {
-        // Print token type
-        switch (token.type)
+    /*
+        for (const Token &token : tokens)
         {
-        case TokenType::Keyword:
-            std::cout << "Keyword: ";
-            break;
-        case TokenType::Identifier:
-            std::cout << "Identifier: ";
-            break;
-        case TokenType::Literal:
-            std::cout << "Literal: ";
-            break;
-        case TokenType::Operator:
-            std::cout << "Operator: ";
-            break;
-        case TokenType::Punctuation:
-            std::cout << "Punctuation: ";
-            break;
-        case TokenType::ComparisonOperator:
-            std::cout << "Comparison Operator: ";
-            break;
-        case TokenType::AssignmentOperator:
-            std::cout << "Assignment Operator: ";
-            break;
-        case TokenType::LogicalOperator:
-            std::cout << "Logical Operator: ";
-            break;
+            // Print token type
+            switch (token.type)
+            {
+            case TokenType::Keyword:
+                std::cout << "Keyword: ";
+                break;
+            case TokenType::Identifier:
+                std::cout << "Identifier: ";
+                break;
+            case TokenType::Literal:
+                std::cout << "Literal: ";
+                break;
+            case TokenType::Operator:
+                std::cout << "Operator: ";
+                break;
+            case TokenType::Punctuation:
+                std::cout << "Punctuation: ";
+                break;
+            case TokenType::ComparisonOperator:
+                std::cout << "Comparison Operator: ";
+                break;
+            case TokenType::AssignmentOperator:
+                std::cout << "Assignment Operator: ";
+                break;
+            case TokenType::LogicalOperator:
+                std::cout << "Logical Operator: ";
+                break;
+            }
+            std::cout << token.value << std::endl;
         }
-        std::cout << token.value << std::endl;
-    }
+        */
     ASTNode *root = p.parse();
     printAST(root);
 

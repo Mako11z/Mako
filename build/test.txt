@@ -1,1 +1,4 @@
-while (i < b and z < c)
+while (i < b) {
+    int i;
+    int y = 5;
+}

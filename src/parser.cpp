@@ -13,11 +13,26 @@ ASTNode *Parser::parse()
     return program;
 }
 
+bool Parser::advanceAndCheckEOF()
+{
+    advanceToken();
+    if (checkForEndOfFile())
+    {
+        std::cout << "End of File \n";
+        return true;
+    }
+    else
+        return false;
+}
+
 bool Parser::checkForEndOfFile()
 {
     return current_index > tokens.size();
 }
 
+/*
+    Check to see if the variable has been defined
+*/
 bool Parser::checkForDefinedVar(const std::string &name)
 {
     if (defined_variables.find(name) != defined_variables.end())
@@ -30,34 +45,28 @@ bool Parser::checkForDefinedVar(const std::string &name)
     }
 }
 
+/*
+    Parse while loop
+*/
 ASTNode *Parser::parseWhileLoop()
 {
     // Skip the 'while' keyword and check for nullptr
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        std::cout << "End of File after while keyword, expected '(' " << std::endl;
+    if (advanceAndCheckEOF())
         return nullptr;
-    }
     Token current_token = getCurrentToken();
     if (current_token.value != "(")
     {
         std::cout << "Syntax Error, Expected '(' " << std::endl;
         return nullptr;
     }
-    advanceToken();
 
+    if (advanceAndCheckEOF())
+        return nullptr;
     WhileLoopNode *while_node = new WhileLoopNode();
     // Loop until end of condition
     current_token = getCurrentToken();
     while (current_token.value != ")")
     {
-        if (checkForEndOfFile())
-        {
-            std::cout << "End of file while parsing while loop" << std::endl;
-            delete while_node;
-            return nullptr;
-        }
         ASTNode *condition = parseCondition();
         if (condition == nullptr)
         {
@@ -74,7 +83,8 @@ ASTNode *Parser::parseWhileLoop()
         }
         else if (current_token.type == TokenType::LogicalOperator)
         {
-            advanceToken();
+            if (advanceAndCheckEOF())
+                return nullptr;
         }
         else
         {
@@ -85,10 +95,44 @@ ASTNode *Parser::parseWhileLoop()
         current_token = getCurrentToken();
     }
 
+    if (advanceAndCheckEOF())
+        return nullptr;
+    current_token = getCurrentToken();
+    if (current_token.value != "{")
+    {
+        std::cout << "Expected '{' \n";
+        return nullptr;
+    }
+
+    // advanceToken();
+    if (advanceAndCheckEOF())
+        return nullptr;
+
+    BodyNode *body_node = new BodyNode();
+    while (current_token.value != "}")
+    {
+        current_token = getCurrentToken();
+        std::cout << "Current value: " << current_token.value << std::endl;
+        ASTNode *statement = getNextStatement();
+        if (statement == nullptr)
+        {
+            std::cout << "Error parsing in while loop \n";
+            delete body_node;
+            delete while_node;
+            return nullptr;
+        }
+        body_node->statements.push_back(statement);
+        current_token = getCurrentToken();
+        if (current_token.value == "}")
+        {
+            break;
+        }
+    }
+    while_node->body = body_node;
     return while_node;
 }
 
-// Parse a condition and grab the left operand, operator, and rigth operand
+// Parse a condition and grab the left operand, operator, and right operand
 ASTNode *Parser::parseCondition()
 {
     Token current_token = getCurrentToken();
@@ -98,7 +142,6 @@ ASTNode *Parser::parseCondition()
     // Left child
     if (current_token.type == TokenType::Identifier)
     {
-        std::cout << current_token.value << std::endl;
         left_child = new IdentifierNode(current_token.value);
     }
     else if (current_token.type == TokenType::Literal)
@@ -112,29 +155,18 @@ ASTNode *Parser::parseCondition()
     }
 
     // Comparison
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        std::cout << "Syntax Error: end of file, expected a compare operator \n";
-        delete left_child;
+    if (advanceAndCheckEOF())
         return nullptr;
-    }
     current_token = getCurrentToken();
     if (current_token.type != TokenType::ComparisonOperator)
     {
         std::cout << "Syntax Error: expected a compare operator \n";
         return nullptr;
     }
-    std::cout << current_token.value << std::endl;
     op = current_token.value;
-    std::cout << op << std::endl;
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        delete left_child;
-        std::cout << "End of File after operator, expected right-hand side of condition\n";
+
+    if (advanceAndCheckEOF())
         return nullptr;
-    }
     current_token = getCurrentToken();
     ASTNode *right_child = nullptr;
     if (current_token.type == TokenType::Identifier)
@@ -151,9 +183,10 @@ ASTNode *Parser::parseCondition()
         std::cout << "Syntax Error: Expected identifier or literal for the right-hand side of the condition.\n";
         return nullptr;
     }
-    advanceToken();
+
+    if (advanceAndCheckEOF())
+        return nullptr;
     return new ConditionalNode(op, left_child, right_child);
-    ;
 }
 
 /*
@@ -167,12 +200,9 @@ ASTNode *Parser::parseVariableDef()
     std::string data_type = current_token.value;
     std::string name;
 
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        std::cout << "End of File after data type" << std::endl;
+    if (advanceAndCheckEOF())
         return nullptr;
-    }
+
     current_token = getCurrentToken();
     if (current_token.type != TokenType::Identifier)
     {
@@ -184,31 +214,24 @@ ASTNode *Parser::parseVariableDef()
     // Add to set of variables we have defined
     defined_variables.insert(name);
 
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        std::cout << "End of File after identifier" << std::endl;
+    if (advanceAndCheckEOF())
         return nullptr;
-    }
 
     current_token = getCurrentToken();
     if (current_token.value == ";")
     {
-        advanceToken();
+
+        if (advanceAndCheckEOF())
+            return nullptr;
         return new VariableDefNode(data_type, name);
     }
     else if (current_token.value == "=")
     {
-        return parseAssignment(new VariableDefNode(data_type, name));
+        ASTNode *var_node = parseAssignment(new VariableDefNode(data_type, name));
+        return var_node;
     }
     std::cout << "Syntax Error: Expected ';' or '=' after variable declaration" << std::endl;
     return nullptr;
-}
-
-ASTNode *Parser::parseIfStatement()
-{
-
-    return NULL;
 }
 
 /*
@@ -218,12 +241,9 @@ ASTNode *Parser::parseIfStatement()
 ASTNode *Parser::parseAssignment(VariableDefNode *left)
 {
     // Get the right child
-    advanceToken();
-    if (checkForEndOfFile())
-    {
-        std::cout << "End of File" << std::endl;
-        return NULL;
-    }
+
+    if (advanceAndCheckEOF())
+        return nullptr;
 
     Token current_token = getCurrentToken();
     if (current_token.type != TokenType::Literal)
@@ -233,13 +253,18 @@ ASTNode *Parser::parseAssignment(VariableDefNode *left)
     }
     // Grab the literal value
     LiteralNode *literal = new LiteralNode(current_token.value);
-    advanceToken();
+
+    if (advanceAndCheckEOF())
+        return nullptr;
     current_token = getCurrentToken();
     if (current_token.value != ";")
     {
         std::cout << "Expected ';' at end of declaration" << std::endl;
         return nullptr;
     }
+
+    if (advanceAndCheckEOF())
+        return nullptr;
     return new AssignmentNode(left, literal);
 }
 
@@ -266,4 +291,22 @@ Token Parser::peekToken()
 void Parser::advanceToken()
 {
     current_index++;
+}
+
+/*
+    Return the next statement to parse
+*/
+ASTNode *Parser::getNextStatement()
+{
+    Token current_token = getCurrentToken();
+    ASTNode *node = nullptr;
+    if (current_token.value == "while")
+    {
+        node = parseWhileLoop();
+    }
+    else if (current_token.value == "float" || current_token.value == "int" || current_token.value == "string")
+    {
+        node = parseVariableDef();
+    }
+    return node;
 }

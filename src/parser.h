@@ -130,6 +130,7 @@ private:
     // Functions
     Token getCurrentToken();
     Token peekToken();
+    bool advanceAndCheckEOF();
     void advanceToken();
     bool checkForEndOfFile();
     bool checkForDefinedVar(const std::string &);
@@ -138,6 +139,8 @@ private:
     ASTNode *parseWhileLoop();
     ASTNode *parseAssignment(VariableDefNode *);
     ASTNode *parseCondition();
+    ASTNode *getNextStatement();
+    // ASTNode *getCondition(ASTNode*);
 };
 
 #endif
