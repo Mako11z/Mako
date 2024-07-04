@@ -6,9 +6,15 @@
 ASTNode *Parser::parse()
 {
     ProgramNode *program = new ProgramNode();
-    ASTNode *curr_node = NULL;
-    curr_node = parseWhileLoop();
-    program->children.push_back(curr_node);
+    while (!checkForEndOfFile())
+    {
+        ASTNode *node = getNextStatement();
+        if (node == nullptr)
+        {
+            break;
+        }
+        program->children.push_back(node);
+    }
 
     return program;
 }
@@ -45,6 +51,105 @@ bool Parser::checkForDefinedVar(const std::string &name)
     }
 }
 
+template <typename NodeType>
+NodeType *Parser::getConditions()
+{
+    NodeType *node = new NodeType();
+    // Loop until end of condition
+    Token current_token = getCurrentToken();
+    while (current_token.value != ")")
+    {
+        ASTNode *condition = parseCondition();
+        if (condition == nullptr)
+        {
+            std::cout << "Error parsing condition \n";
+            delete node;
+            return nullptr;
+        }
+        node->conditions.push_back(condition);
+
+        current_token = getCurrentToken();
+        if (current_token.value == ")")
+        {
+            break;
+        }
+        else if (current_token.type == TokenType::LogicalOperator)
+        {
+            if (advanceAndCheckEOF())
+                return nullptr;
+        }
+        else
+        {
+            delete node;
+            std::cout << "Expected a logical operator or ') \n";
+            return nullptr;
+        }
+        current_token = getCurrentToken();
+    }
+    if (advanceAndCheckEOF())
+        return nullptr;
+    return node;
+}
+
+BodyNode *Parser::getBodyStatements()
+{
+    // Advance past '{'
+    if (advanceAndCheckEOF())
+        return nullptr;
+    Token current_token = getCurrentToken();
+    BodyNode *body_node = new BodyNode();
+    while (current_token.value != "}")
+    {
+        ASTNode *statement = getNextStatement();
+        if (statement == nullptr)
+        {
+            std::cout << "Error parsing in body \n";
+            delete body_node;
+            return nullptr;
+        }
+        body_node->statements.push_back(statement);
+        current_token = getCurrentToken();
+        if (current_token.value == "}")
+        {
+            break;
+        }
+    }
+    return body_node;
+}
+
+ASTNode *Parser::parseIfStatement()
+{
+    // Skip the 'if' keyword and check for nullptr
+    if (advanceAndCheckEOF())
+        return nullptr;
+    Token current_token = getCurrentToken();
+    if (current_token.value != "(")
+    {
+        std::cout << "Syntax Error, Expected '(' " << std::endl;
+        return nullptr;
+    }
+    // Advance past '('
+    if (advanceAndCheckEOF())
+        return nullptr;
+
+    IfStatementNode *if_node = getConditions<IfStatementNode>();
+    if (if_node == nullptr)
+        return nullptr;
+
+    BodyNode *body_node = getBodyStatements();
+    current_token = getCurrentToken();
+    if (current_token.value != "}")
+    {
+        std::cout << "Expected '}' \n";
+        return nullptr;
+    }
+    if (advanceAndCheckEOF())
+        return nullptr;
+
+    if_node->body = body_node;
+    return if_node;
+}
+
 /*
     Parse while loop
 */
@@ -62,72 +167,21 @@ ASTNode *Parser::parseWhileLoop()
 
     if (advanceAndCheckEOF())
         return nullptr;
-    WhileLoopNode *while_node = new WhileLoopNode();
-    // Loop until end of condition
-    current_token = getCurrentToken();
-    while (current_token.value != ")")
-    {
-        ASTNode *condition = parseCondition();
-        if (condition == nullptr)
-        {
-            std::cout << "Error parsing condition in while loop \n";
-            delete while_node;
-            return nullptr;
-        }
-        while_node->conditions.push_back(condition);
 
-        current_token = getCurrentToken();
-        if (current_token.value == ")")
-        {
-            break;
-        }
-        else if (current_token.type == TokenType::LogicalOperator)
-        {
-            if (advanceAndCheckEOF())
-                return nullptr;
-        }
-        else
-        {
-            delete while_node;
-            std::cout << "Expected a logical operator or ') \n";
-            return nullptr;
-        }
-        current_token = getCurrentToken();
-    }
-
-    if (advanceAndCheckEOF())
+    WhileLoopNode *while_node = getConditions<WhileLoopNode>();
+    if (while_node == nullptr)
         return nullptr;
+
+    BodyNode *body_node = getBodyStatements();
     current_token = getCurrentToken();
-    if (current_token.value != "{")
+    if (current_token.value != "}")
     {
-        std::cout << "Expected '{' \n";
+        std::cout << "Expected '}' \n";
         return nullptr;
     }
-
-    // advanceToken();
     if (advanceAndCheckEOF())
         return nullptr;
 
-    BodyNode *body_node = new BodyNode();
-    while (current_token.value != "}")
-    {
-        current_token = getCurrentToken();
-        std::cout << "Current value: " << current_token.value << std::endl;
-        ASTNode *statement = getNextStatement();
-        if (statement == nullptr)
-        {
-            std::cout << "Error parsing in while loop \n";
-            delete body_node;
-            delete while_node;
-            return nullptr;
-        }
-        body_node->statements.push_back(statement);
-        current_token = getCurrentToken();
-        if (current_token.value == "}")
-        {
-            break;
-        }
-    }
     while_node->body = body_node;
     return while_node;
 }
@@ -220,7 +274,6 @@ ASTNode *Parser::parseVariableDef()
     current_token = getCurrentToken();
     if (current_token.value == ";")
     {
-
         if (advanceAndCheckEOF())
             return nullptr;
         return new VariableDefNode(data_type, name);
@@ -307,6 +360,10 @@ ASTNode *Parser::getNextStatement()
     else if (current_token.value == "float" || current_token.value == "int" || current_token.value == "string")
     {
         node = parseVariableDef();
+    }
+    else if (current_token.value == "if")
+    {
+        node = parseIfStatement();
     }
     return node;
 }

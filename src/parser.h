@@ -128,6 +128,9 @@ private:
     std::set<std::string> defined_variables;
     size_t current_index;
     // Functions
+    template <typename NodeType>
+    NodeType *getConditions();
+
     Token getCurrentToken();
     Token peekToken();
     bool advanceAndCheckEOF();
@@ -140,7 +143,7 @@ private:
     ASTNode *parseAssignment(VariableDefNode *);
     ASTNode *parseCondition();
     ASTNode *getNextStatement();
-    // ASTNode *getCondition(ASTNode*);
+    BodyNode *getBodyStatements();
 };
 
 #endif
