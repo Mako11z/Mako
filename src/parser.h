@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <set>
+#include <map>
 #include "lexer.h"
 
 enum class ASTNodeType
@@ -125,7 +125,7 @@ public:
 private:
     // Variables
     std::vector<Token> &tokens;
-    std::set<std::string> defined_variables;
+    std::map<std::string, ASTNode *> defined_variables;
     size_t current_index;
     // Functions
     template <typename NodeType>
@@ -140,10 +140,11 @@ private:
     ASTNode *parseIfStatement();
     ASTNode *parseVariableDef();
     ASTNode *parseWhileLoop();
-    ASTNode *parseAssignment(VariableDefNode *);
+    ASTNode *parseAssignment(VariableDefNode *, std::string name);
     ASTNode *parseCondition();
     ASTNode *getNextStatement();
     BodyNode *getBodyStatements();
+    ASTNode *parseIdentifier();
 };
 
 #endif

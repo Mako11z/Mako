@@ -33,7 +33,7 @@ bool Parser::advanceAndCheckEOF()
 
 bool Parser::checkForEndOfFile()
 {
-    return current_index > tokens.size();
+    return current_index >= tokens.size();
 }
 
 /*
@@ -253,7 +253,7 @@ ASTNode *Parser::parseVariableDef()
     // Set the data type
     std::string data_type = current_token.value;
     std::string name;
-
+    // Advance to identifier
     if (advanceAndCheckEOF())
         return nullptr;
 
@@ -265,8 +265,6 @@ ASTNode *Parser::parseVariableDef()
     }
     // Set identifier
     name = current_token.value;
-    // Add to set of variables we have defined
-    defined_variables.insert(name);
 
     if (advanceAndCheckEOF())
         return nullptr;
@@ -276,11 +274,13 @@ ASTNode *Parser::parseVariableDef()
     {
         if (advanceAndCheckEOF())
             return nullptr;
-        return new VariableDefNode(data_type, name);
+        VariableDefNode *var_node = new VariableDefNode(data_type, name);
+        defined_variables[name] = var_node;
+        return var_node;
     }
     else if (current_token.value == "=")
     {
-        ASTNode *var_node = parseAssignment(new VariableDefNode(data_type, name));
+        ASTNode *var_node = parseAssignment(new VariableDefNode(data_type, name), name);
         return var_node;
     }
     std::cout << "Syntax Error: Expected ';' or '=' after variable declaration" << std::endl;
@@ -291,21 +291,28 @@ ASTNode *Parser::parseVariableDef()
     Parse an assignmnet appending the variable definition as its
     its left child and the literal value as the right child
 */
-ASTNode *Parser::parseAssignment(VariableDefNode *left)
+ASTNode *Parser::parseAssignment(VariableDefNode *left, std::string name)
 {
-    // Get the right child
-
+    // Advance past '='
     if (advanceAndCheckEOF())
         return nullptr;
 
     Token current_token = getCurrentToken();
-    if (current_token.type != TokenType::Literal)
+    ASTNode *right = nullptr;
+    if (current_token.type == TokenType::Literal)
     {
-        std::cout << "Expected a literal" << std::endl;
-        return nullptr;
+        // Grab the literal value
+        right = new LiteralNode(current_token.value);
     }
-    // Grab the literal value
-    LiteralNode *literal = new LiteralNode(current_token.value);
+    else if (current_token.type == TokenType::Identifier)
+    {
+        if (!checkForDefinedVar(current_token.value))
+        {
+            std::cout << "Variable undefined: " << current_token.value << std::endl;
+            return nullptr;
+        }
+        right = defined_variables[current_token.value];
+    }
 
     if (advanceAndCheckEOF())
         return nullptr;
@@ -316,28 +323,16 @@ ASTNode *Parser::parseAssignment(VariableDefNode *left)
         return nullptr;
     }
 
-    if (advanceAndCheckEOF())
-        return nullptr;
-    return new AssignmentNode(left, literal);
+    advanceToken();
+
+    defined_variables[name] = right;
+    return new AssignmentNode(left, right);
 }
 
 // Return the current token
 Token Parser::getCurrentToken()
 {
     return tokens[current_index];
-}
-
-// Peek ahead to the next token
-Token Parser::peekToken()
-{
-    if (current_index + 1 < tokens.size())
-    {
-        return tokens[current_index + 1];
-    }
-    else
-    {
-        return Token{TokenType::Punctuation, "End of File"};
-    }
 }
 
 // Advance to the next index
@@ -364,6 +359,15 @@ ASTNode *Parser::getNextStatement()
     else if (current_token.value == "if")
     {
         node = parseIfStatement();
+    }
+    else if (checkForEndOfFile())
+    {
+        return nullptr;
+    }
+    else
+    {
+        std::cout << "Unknown statement \n";
+        return nullptr;
     }
     return node;
 }

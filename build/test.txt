@@ -1,6 +1,2 @@
-if (i > 7) {
-    int test = 99;
-    while (i >= 5) {
-        float y = 1;
-    }
-}
+int i = 0;
+int y = i;
