@@ -330,10 +330,10 @@ ASTNode *Parser::parseIdentifier()
 }
 
 /*
-    Return an expression of arithmic nodes
+    Return a tree of arithmic nodes
     Call parseTerm() first to handle and check for * and /
-    If we encounter + or subtraction we call parseExpression again to search for * and /
-    In the end we pop back up and return the + and - nodes maintaining a left to right association
+    If we encounter + or -, recursively call parseTerm
+    Constrcucts and returns nodes with left to right association
 */
 ASTNode *Parser::parseExpression()
 {
@@ -356,7 +356,8 @@ ASTNode *Parser::parseExpression()
 }
 
 /*
-    Call parseFactor to return a literl or Identifier node
+    Parse and returns a term in the expression
+    Call parseFactor to return a literal or Identifier node
     then check for * or /
     if we do encounter them then we immediately get the next value and create
     a arithmic node between the two
