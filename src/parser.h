@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <string>
-#include <map>
+#include <set>
 #include "lexer.h"
 
 enum class ASTNodeType
@@ -59,8 +59,8 @@ struct IdentifierNode : ASTNode
 
 struct ArithmicNode : ASTNode
 {
-    std::string operation;
-    ArithmicNode(const std::string op, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ArithmicExpressions)
+    std::string op;
+    ArithmicNode(const std::string val, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ArithmicExpressions), op(val)
     {
         children.push_back(left);
         children.push_back(right);
@@ -121,30 +121,33 @@ class Parser
 public:
     Parser(std::vector<Token> &tokens) : tokens(tokens), current_index(0) {}
     ASTNode *parse();
+    void printAST(ASTNode *node, int indent = 0);
 
 private:
     // Variables
     std::vector<Token> &tokens;
-    std::map<std::string, ASTNode *> defined_variables;
+    std::set<std::string> defined_variables;
     size_t current_index;
     // Functions
     template <typename NodeType>
     NodeType *getConditions();
 
     Token getCurrentToken();
-    Token peekToken();
+    ASTNode *parseIfStatement();
+    ASTNode *parseVariableDef();
+    ASTNode *parseWhileLoop();
+    ASTNode *parseAssignment(ASTNode *);
+    ASTNode *parseCondition();
+    ASTNode *getNextStatement();
+    ASTNode *parseExpression();
+    ASTNode *parseTerm();
+    ASTNode *parseFactor();
+    ASTNode *parseIdentifier();
+    BodyNode *getBodyStatements();
     bool advanceAndCheckEOF();
     void advanceToken();
     bool checkForEndOfFile();
     bool checkForDefinedVar(const std::string &);
-    ASTNode *parseIfStatement();
-    ASTNode *parseVariableDef();
-    ASTNode *parseWhileLoop();
-    ASTNode *parseAssignment(VariableDefNode *, std::string name);
-    ASTNode *parseCondition();
-    ASTNode *getNextStatement();
-    BodyNode *getBodyStatements();
-    ASTNode *parseIdentifier();
 };
 
 #endif
