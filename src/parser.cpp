@@ -68,6 +68,7 @@ NodeType *Parser::getConditions()
         }
         else if (current_token.type == TokenType::LogicalOperator)
         {
+            // Advance
             if (advanceAndCheckEOF())
                 return nullptr;
         }
@@ -330,59 +331,23 @@ ASTNode *Parser::parseIdentifier()
 }
 
 /*
-    Return a tree of arithmic nodes
-    Call parseTerm() first to handle and check for * and /
-    If we encounter + or -, recursively call parseTerm
-    Constrcucts and returns nodes with left to right association
+    Return a parsed expression of arithmic nodes
+    Recurisvely call for parseTerm to check for * and /
+    Combines terms using addition and subtraction operators.
+    In the end, ensures all rigth and left nodes are correctly attached
+    preserving operator precendence
 */
 ASTNode *Parser::parseExpression()
 {
-    ASTNode *left = parseTerm();
-    while (!checkForEndOfFile())
-    {
-        Token current_token = getCurrentToken();
-        if (current_token.value == "+" || current_token.value == "-")
-        {
-            advanceToken();
-            ASTNode *right = parseTerm();
-            left = new ArithmicNode(current_token.value, left, right);
-        }
-        else
-        {
-            break;
-        }
-    }
-    return left;
+
+    return nullptr;
 }
 
 /*
-    Parse and returns a term in the expression
-    Call parseFactor to return a literal or Identifier node
-    then check for * or /
-    if we do encounter them then we immediately get the next value and create
-    a arithmic node between the two
-    else we break and return to the parseExpression to evaluate the + and - operations
+    Return a literla value or an identifier then advance the index and grab the operator,
+    return to parseTerm to check for * and / else return to parseExpression and check for
+    + and -
 */
-ASTNode *Parser::parseTerm()
-{
-    ASTNode *left = parseFactor();
-    while (!checkForEndOfFile())
-    {
-        Token current_token = getCurrentToken();
-        if (current_token.value == "*" || current_token.value == "/")
-        {
-            advanceToken();
-            ASTNode *right = parseFactor();
-            left = new ArithmicNode(current_token.value, left, right);
-        }
-        else
-        {
-            break;
-        }
-    }
-    return left;
-}
-
 ASTNode *Parser::parseFactor()
 {
     Token current_token = getCurrentToken();
@@ -442,148 +407,4 @@ ASTNode *Parser::getNextStatement()
         return nullptr;
     }
     return node;
-}
-
-void Parser::printAST(ASTNode *node, int indent)
-{
-    if (node == nullptr)
-        return;
-
-    std::string indentStr(indent, ' ');
-    switch (node->type)
-    {
-    case ASTNodeType::Program:
-        std::cout << indentStr << "ProgramNode\n";
-        for (ASTNode *child : node->children)
-        {
-            printAST(child, indent + 2);
-        }
-        break;
-
-    case ASTNodeType::VariableDef:
-    {
-        VariableDefNode *varDef = dynamic_cast<VariableDefNode *>(node);
-        std::cout << indentStr << "VariableDefNode(data_type: " << varDef->data_type << ", var_name: " << varDef->var_name << ")\n";
-    }
-    break;
-
-    case ASTNodeType::Literal:
-    {
-        LiteralNode *literal = dynamic_cast<LiteralNode *>(node);
-        std::cout << indentStr << "LiteralNode(value: " << literal->value << ")\n";
-    }
-    break;
-
-    case ASTNodeType::Assignment:
-    {
-        AssignmentNode *assign = dynamic_cast<AssignmentNode *>(node);
-        std::cout << indentStr << "AssignmentNode\n";
-        printAST(assign->children[0], indent + 2); // left child
-        printAST(assign->children[1], indent + 2); // right child
-    }
-    break;
-
-    case ASTNodeType::IfStatement:
-    {
-        IfStatementNode *ifNode = dynamic_cast<IfStatementNode *>(node);
-        std::cout << indentStr << "IfStatementNode\n";
-        std::cout << indentStr << "  Conditions:\n";
-        for (ASTNode *condition : ifNode->conditions)
-        {
-            printAST(condition, indent + 4);
-        }
-        if (ifNode->body)
-        {
-            std::cout << indentStr << "  Body:\n";
-            printAST(ifNode->body, indent + 4);
-        }
-        if (ifNode->elseNode)
-        {
-            std::cout << indentStr << "  Else:\n";
-            printAST(ifNode->elseNode, indent + 4);
-        }
-    }
-    break;
-
-    case ASTNodeType::ElseStatement:
-    {
-        ElseNode *elseNode = dynamic_cast<ElseNode *>(node);
-        std::cout << indentStr << "ElseNode\n";
-        if (elseNode->body)
-        {
-            std::cout << indentStr << "  Body:\n";
-            printAST(elseNode->body, indent + 4);
-        }
-    }
-    break;
-
-    case ASTNodeType::WhileLoop:
-    {
-        WhileLoopNode *whileNode = dynamic_cast<WhileLoopNode *>(node);
-        std::cout << indentStr << "WhileLoopNode\n";
-        std::cout << indentStr << "  Conditions:\n";
-        for (ASTNode *condition : whileNode->conditions)
-        {
-            printAST(condition, indent + 4);
-        }
-        if (whileNode->body)
-        {
-            std::cout << indentStr << "  Body:\n";
-            printAST(whileNode->body, indent + 4);
-        }
-    }
-    break;
-
-    case ASTNodeType::Print:
-    {
-        PrintNode *printNode = dynamic_cast<PrintNode *>(node);
-        std::cout << indentStr << "PrintNode(value_to_print: " << printNode->value_to_print << ")\n";
-    }
-    break;
-
-    case ASTNodeType::ConditionalExpression:
-    {
-        ConditionalNode *condNode = dynamic_cast<ConditionalNode *>(node);
-        std::cout << indentStr << "ConditionalNode(operation: " << condNode->operation << ")\n";
-        std::cout << indentStr << "  Left:\n";
-        printAST(condNode->children[0], indent + 4);
-        std::cout << indentStr << "  Right:\n";
-        printAST(condNode->children[1], indent + 4);
-    }
-    break;
-
-    case ASTNodeType::ArithmicExpressions:
-    {
-        ArithmicNode *arithNode = dynamic_cast<ArithmicNode *>(node);
-        std::cout << indentStr << "ArithmicNode(operation: " << arithNode->op << ")\n";
-        std::cout << indentStr << "  Left:\n";
-        printAST(arithNode->children[0], indent + 4);
-        std::cout << indentStr << "  Right:\n";
-        printAST(arithNode->children[1], indent + 4);
-    }
-    break;
-
-    case ASTNodeType::BodyStatements:
-    {
-        BodyNode *bodyNode = dynamic_cast<BodyNode *>(node);
-        std::cout << indentStr << "BodyNode\n";
-        for (ASTNode *statement : bodyNode->statements)
-        {
-            printAST(statement, indent + 2);
-        }
-    }
-    break;
-
-    case ASTNodeType::Identifier:
-    {
-        IdentifierNode *idNode = dynamic_cast<IdentifierNode *>(node);
-        std::cout << indentStr << "IdentifierNode(name: " << idNode->name;
-        std::cout << ")\n";
-    }
-    break;
-
-    default:
-        std::cout << indentStr << "Unknown ASTNode type\n";
-        break;
-    }
 }
