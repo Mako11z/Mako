@@ -39,6 +39,13 @@ struct BodyNode : ASTNode
 {
     std::vector<ASTNode *> statements;
     BodyNode() : ASTNode(ASTNodeType::BodyStatements) {}
+    ~BodyNode()
+    {
+        for (ASTNode *stmt : statements)
+        {
+            delete stmt;
+        }
+    }
 };
 
 struct ConditionalNode : ASTNode
@@ -48,6 +55,13 @@ struct ConditionalNode : ASTNode
     {
         children.push_back(left);
         children.push_back(right);
+    }
+    ~ConditionalNode()
+    {
+        for (ASTNode *child : children)
+        {
+            delete child;
+        }
     }
 };
 
@@ -60,10 +74,17 @@ struct IdentifierNode : ASTNode
 struct ArithmicNode : ASTNode
 {
     std::string op;
-    ArithmicNode(const std::string val, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ArithmicExpressions), op(val)
+    ArithmicNode(const std::string &val, ASTNode *left, ASTNode *right) : ASTNode(ASTNodeType::ArithmicExpressions), op(val)
     {
         children.push_back(left);
         children.push_back(right);
+    }
+    ~ArithmicNode()
+    {
+        for (ASTNode *child : children)
+        {
+            delete child;
+        }
     }
 };
 
@@ -101,6 +122,15 @@ struct IfStatementNode : ASTNode
     BodyNode *body;
     ASTNode *elseNode;
     IfStatementNode() : ASTNode(ASTNodeType::IfStatement), body(nullptr), elseNode(nullptr) {}
+    ~IfStatementNode()
+    {
+        for (ASTNode *condition : conditions)
+        {
+            delete condition;
+        }
+        delete body;
+        delete elseNode;
+    }
 };
 
 struct WhileLoopNode : ASTNode
@@ -108,6 +138,14 @@ struct WhileLoopNode : ASTNode
     std::vector<ASTNode *> conditions;
     BodyNode *body;
     WhileLoopNode() : ASTNode(ASTNodeType::WhileLoop), body(nullptr) {}
+    ~WhileLoopNode()
+    {
+        for (ASTNode *condition : conditions)
+        {
+            delete condition;
+        }
+        delete body;
+    }
 };
 
 struct PrintNode : ASTNode

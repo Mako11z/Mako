@@ -1,8 +1,5 @@
-int i = 0;
-while (i < 5) {
-    if (i < 5) {
-        i = i + 1;
-    }
+if (2 < 5) {
+    int hey = 0;
 }
 
 
