@@ -1,5 +1,4 @@
-if (2 < 5) {
-    int hey = 0;
+int i = 0;
+if (i < 5) {
+    int y = 0;
 }
-
-

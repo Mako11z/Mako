@@ -8,6 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "/Users/isaiah/Projects/Mako/src/codegen.cpp" "CMakeFiles/main.dir/src/codegen.cpp.o" "gcc" "CMakeFiles/main.dir/src/codegen.cpp.o.d"
   "/Users/isaiah/Projects/Mako/src/lexer.cpp" "CMakeFiles/main.dir/src/lexer.cpp.o" "gcc" "CMakeFiles/main.dir/src/lexer.cpp.o.d"
   "/Users/isaiah/Projects/Mako/src/main.cpp" "CMakeFiles/main.dir/src/main.cpp.o" "gcc" "CMakeFiles/main.dir/src/main.cpp.o.d"
   "/Users/isaiah/Projects/Mako/src/parser.cpp" "CMakeFiles/main.dir/src/parser.cpp.o" "gcc" "CMakeFiles/main.dir/src/parser.cpp.o.d"

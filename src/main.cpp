@@ -4,6 +4,7 @@
 #include <vector>
 #include "parser.h"
 #include "lexer.h"
+#include "codegen.h"
 
 int main()
 {
@@ -11,42 +12,20 @@ int main()
     Lexer lexer(file_name);
 
     std::vector<Token> tokens = lexer.tokenize();
-    Parser p = (tokens);
-    /*
-        for (const Token &token : tokens)
-        {
-            // Print token type
-            switch (token.type)
-            {
-            case TokenType::Keyword:
-                std::cout << "Keyword: ";
-                break;
-            case TokenType::Identifier:
-                std::cout << "Identifier: ";
-                break;
-            case TokenType::Literal:
-                std::cout << "Literal: ";
-                break;
-            case TokenType::Operator:
-                std::cout << "Operator: ";
-                break;
-            case TokenType::Punctuation:
-                std::cout << "Punctuation: ";
-                break;
-            case TokenType::ComparisonOperator:
-                std::cout << "Comparison Operator: ";
-                break;
-            case TokenType::AssignmentOperator:
-                std::cout << "Assignment Operator: ";
-                break;
-                std::cout << "Logical Operator: ";
-                break;
-            }
-            std::cout << token.value << std::endl;
-        }
-        */
-    ASTNode *root = p.parse();
-    p.printAST(root, 0);
+    Parser parser(tokens);
+
+    ASTNode *root = parser.parse();
+    if (!root)
+    {
+        std::cerr << "Error parsing the program.\n";
+        return 1;
+    }
+    parser.printAST(root, 0);
+
+    CodeGenerator codegen;
+    codegen.generateCode(root);
+    codegen.printIR();
+    codegen.printIR("output.ll");
 
     return 0;
 }

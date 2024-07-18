@@ -119,6 +119,7 @@ struct ElseNode : ASTNode
 struct IfStatementNode : ASTNode
 {
     std::vector<ASTNode *> conditions;
+    std::vector<std::string> logicalOps;
     BodyNode *body;
     ASTNode *elseNode;
     IfStatementNode() : ASTNode(ASTNodeType::IfStatement), body(nullptr), elseNode(nullptr) {}
@@ -136,6 +137,7 @@ struct IfStatementNode : ASTNode
 struct WhileLoopNode : ASTNode
 {
     std::vector<ASTNode *> conditions;
+    std::vector<std::string> logicalOps;
     BodyNode *body;
     WhileLoopNode() : ASTNode(ASTNodeType::WhileLoop), body(nullptr) {}
     ~WhileLoopNode()
@@ -178,7 +180,6 @@ private:
     ASTNode *parseCondition();
     ASTNode *getNextStatement();
     ASTNode *parseExpression();
-    ASTNode *parseTerm();
     ASTNode *parseFactor();
     ASTNode *parseIdentifier();
     BodyNode *getBodyStatements();

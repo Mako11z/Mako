@@ -1,3 +1,7 @@
+/Users/isaiah/Projects/Mako/build/CMakeFiles/intrinsics_gen.dir
+/Users/isaiah/Projects/Mako/build/CMakeFiles/omp_gen.dir
+/Users/isaiah/Projects/Mako/build/CMakeFiles/acc_gen.dir
+/Users/isaiah/Projects/Mako/build/CMakeFiles/RISCVTargetParserTableGen.dir
 /Users/isaiah/Projects/Mako/build/CMakeFiles/main.dir
 /Users/isaiah/Projects/Mako/build/CMakeFiles/edit_cache.dir
 /Users/isaiah/Projects/Mako/build/CMakeFiles/rebuild_cache.dir
