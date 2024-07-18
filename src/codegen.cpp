@@ -57,12 +57,16 @@ llvm::Value *CodeGenerator::generateCodeForNode(ASTNode *node)
     case ASTNodeType::Assignment:
         std::cout << "Generating code for Assignment node\n";
         return generateCodeForAssignment(static_cast<AssignmentNode *>(node));
+    case ASTNodeType::ArithmicExpressions:
+        return generateCodeForArithmic(static_cast<ArithmicNode *>(node));
     case ASTNodeType::Literal:
         std::cout << "Creating memory for literal \n";
         return generateCodeForLiteral(static_cast<LiteralNode *>(node));
     case ASTNodeType::IfStatement:
         std::cout << "Calling if statement \n";
         return generateCodeForIfStatement(static_cast<IfStatementNode *>(node));
+    case ASTNodeType::WhileLoop:
+        return generateCodeForWhileLoop(static_cast<WhileLoopNode *>(node));
     case ASTNodeType::BodyStatements:
         for (ASTNode *stmt : static_cast<BodyNode *>(node)->statements)
         {
@@ -188,6 +192,47 @@ llvm::Value *CodeGenerator::generateCodeForIfStatement(IfStatementNode *node)
     return nullptr;
 }
 
+llvm::Value *CodeGenerator::generateCodeForWhileLoop(WhileLoopNode *node)
+{
+    // Create basic blocks for loop condition, loop body, and loop exit
+    llvm::Function *function = builder.GetInsertBlock()->getParent();
+    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(context, "loopcond", function);
+    llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(context, "loopbody", function);
+    llvm::BasicBlock *afterBB = llvm::BasicBlock::Create(context, "afterloop", function);
+
+    // Insert an explicit branch to the loop condition
+    builder.CreateBr(condBB);
+    // Generate code for loop condition
+    builder.SetInsertPoint(condBB);
+    llvm::Value *combinedCondition = generateCodeForNode(node->conditions[0]);
+
+    for (size_t i = 1; i < node->conditions.size(); ++i)
+    {
+        llvm::Value *nextCondition = generateCodeForNode(node->conditions[i]);
+        std::string logicalOp = node->logicalOps[i - 1];
+        if (logicalOp == "and")
+        {
+            combinedCondition = builder.CreateAnd(combinedCondition, nextCondition, "andtmp");
+        }
+        else if (logicalOp == "or")
+        {
+            combinedCondition = builder.CreateOr(combinedCondition, nextCondition, "ortmp");
+        }
+    }
+
+    builder.CreateCondBr(combinedCondition, bodyBB, afterBB);
+
+    // Generate code for loop body
+    builder.SetInsertPoint(bodyBB);
+    generateCodeForNode(node->body);
+    builder.CreateBr(condBB); // Branch back to the loop condition
+
+    // Set the insertion point for subsequent code to the block after the loop
+    builder.SetInsertPoint(afterBB);
+
+    return nullptr;
+}
+
 // Handle VariableDefNodes and allocate memory for the variable
 llvm::Value *CodeGenerator::generateCodeForVariableDef(VariableDefNode *node)
 {
@@ -267,4 +312,37 @@ void CodeGenerator::printIR(const std::string &filename)
     }
     module->print(dest, nullptr);
     dest.close();
+}
+
+llvm::Value *CodeGenerator::generateCodeForArithmic(ArithmicNode *node)
+{
+    llvm::Value *left = generateCodeForNode(node->children[0]);
+    llvm::Value *right = generateCodeForNode(node->children[1]);
+
+    if (!left || !right)
+    {
+        return nullptr;
+    }
+
+    if (node->op == "+")
+    {
+        return builder.CreateAdd(left, right, "addtmp");
+    }
+    else if (node->op == "-")
+    {
+        return builder.CreateSub(left, right, "subtmp");
+    }
+    else if (node->op == "*")
+    {
+        return builder.CreateMul(left, right, "multmp");
+    }
+    else if (node->op == "/")
+    {
+        return builder.CreateSDiv(left, right, "divtmp");
+    }
+    else
+    {
+        std::cerr << "Unknown arithmetic operator: " << node->op << std::endl;
+        return nullptr;
+    }
 }
