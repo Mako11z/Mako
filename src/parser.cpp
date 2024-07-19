@@ -4,6 +4,7 @@
 #include <deque>
 #include <stack>
 #include "parser.h"
+#include "codegen.h"
 
 ASTNode *Parser::parse()
 {
@@ -70,6 +71,8 @@ NodeType *Parser::getConditions()
         }
         else if (current_token.type == TokenType::LogicalOperator)
         {
+            // Add logical operator
+            node->logicalOps.push_back(current_token.value);
             // Advance
             if (advanceAndCheckEOF())
             {
