@@ -6,6 +6,7 @@
 #include <llvm/IR/Type.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/raw_ostream.h>
+#include "parser.h"
 
 /*
     Create a main function and set it as the entry point of the basic block (entry)
@@ -46,27 +47,24 @@ llvm::Value *CodeGenerator::generateCodeForNode(ASTNode *node)
     case ASTNodeType::Program:
         for (ASTNode *child : node->children)
         {
-            std::cout << "Iterating through prgram node \n";
+
             generateCodeForNode(child);
-            std::cout << "Im here after call \n";
         }
         break;
     case ASTNodeType::VariableDef:
-        std::cout << "Iterating through variable def in generate code function \n";
+
         return generateCodeForVariableDef(static_cast<VariableDefNode *>(node));
     case ASTNodeType::Assignment:
-        std::cout << "Generating code for Assignment node\n";
+
         return generateCodeForAssignment(static_cast<AssignmentNode *>(node));
     case ASTNodeType::ArithmicExpressions:
         return generateCodeForArithmic(static_cast<ArithmicNode *>(node));
     case ASTNodeType::Literal:
-        std::cout << "Creating memory for literal \n";
+
         return generateCodeForLiteral(static_cast<LiteralNode *>(node));
     case ASTNodeType::IfStatement:
-        std::cout << "Calling if statement \n";
+
         return generateCodeForIfStatement(static_cast<IfStatementNode *>(node));
-    case ASTNodeType::WhileLoop:
-        return generateCodeForWhileLoop(static_cast<WhileLoopNode *>(node));
     case ASTNodeType::BodyStatements:
         for (ASTNode *stmt : static_cast<BodyNode *>(node)->statements)
         {
@@ -75,7 +73,7 @@ llvm::Value *CodeGenerator::generateCodeForNode(ASTNode *node)
         break;
     case ASTNodeType::ConditionalExpression:
         return generateCodeForCondition(static_cast<ConditionalNode *>(node));
-    case ASTNodeType::Identifier: // Handle Identifier
+    case ASTNodeType::Identifier:
         return generateCodeForIdentifier(static_cast<IdentifierNode *>(node));
     default:
         std::cout << "unknow statemnet \n";
@@ -85,7 +83,6 @@ llvm::Value *CodeGenerator::generateCodeForNode(ASTNode *node)
 }
 llvm::Value *CodeGenerator::generateCodeForCondition(ConditionalNode *node)
 {
-    std::cout << "Im here in the condition function \n";
     llvm::Value *left = generateCodeForNode(node->children[0]);
 
     // If left is an IdentifierNode, fetch its associated literal value
@@ -97,37 +94,15 @@ llvm::Value *CodeGenerator::generateCodeForCondition(ConditionalNode *node)
     }
 
     llvm::Value *right = generateCodeForNode(node->children[1]);
-    std::cout << "Operation: " << node->operation << std::endl;
 
     if (left->getType() != right->getType())
     {
-        std::cout << "NOTTT EQUALLL \n";
-        std::string leftTypeStr;
-        llvm::raw_string_ostream leftStream(leftTypeStr);
-        left->getType()->print(leftStream);
-
-        std::string rightTypeStr;
-        llvm::raw_string_ostream rightStream(rightTypeStr);
-        right->getType()->print(rightStream);
-
-        std::cout << "Left type: " << leftStream.str() << std::endl;
-        std::cout << "Right type: " << rightStream.str() << std::endl;
+        std::cout << "Types are of not same \n";
         return nullptr;
     }
-    std::string leftTypeStr;
-    llvm::raw_string_ostream leftStream(leftTypeStr);
-    left->getType()->print(leftStream);
-
-    std::string rightTypeStr;
-    llvm::raw_string_ostream rightStream(rightTypeStr);
-    right->getType()->print(rightStream);
-
-    std::cout << "Left type: " << leftStream.str() << std::endl;
-    std::cout << "Right type: " << rightStream.str() << std::endl;
 
     if (node->operation == "<")
     {
-        std::cout << "Im here in the condition where op = < \n";
         return builder.CreateICmpSLT(left, right, "cmptmp");
     }
     else if (node->operation == "<=")
@@ -192,59 +167,21 @@ llvm::Value *CodeGenerator::generateCodeForIfStatement(IfStatementNode *node)
     return nullptr;
 }
 
-llvm::Value *CodeGenerator::generateCodeForWhileLoop(WhileLoopNode *node)
-{
-    // Create basic blocks for loop condition, loop body, and loop exit
-    llvm::Function *function = builder.GetInsertBlock()->getParent();
-    llvm::BasicBlock *condBB = llvm::BasicBlock::Create(context, "loopcond", function);
-    llvm::BasicBlock *bodyBB = llvm::BasicBlock::Create(context, "loopbody", function);
-    llvm::BasicBlock *afterBB = llvm::BasicBlock::Create(context, "afterloop", function);
-
-    // Insert an explicit branch to the loop condition
-    builder.CreateBr(condBB);
-    // Generate code for loop condition
-    builder.SetInsertPoint(condBB);
-    llvm::Value *combinedCondition = generateCodeForNode(node->conditions[0]);
-
-    for (size_t i = 1; i < node->conditions.size(); ++i)
-    {
-        llvm::Value *nextCondition = generateCodeForNode(node->conditions[i]);
-        std::string logicalOp = node->logicalOps[i - 1];
-        if (logicalOp == "and")
-        {
-            combinedCondition = builder.CreateAnd(combinedCondition, nextCondition, "andtmp");
-        }
-        else if (logicalOp == "or")
-        {
-            combinedCondition = builder.CreateOr(combinedCondition, nextCondition, "ortmp");
-        }
-    }
-
-    builder.CreateCondBr(combinedCondition, bodyBB, afterBB);
-
-    // Generate code for loop body
-    builder.SetInsertPoint(bodyBB);
-    generateCodeForNode(node->body);
-    builder.CreateBr(condBB); // Branch back to the loop condition
-
-    // Set the insertion point for subsequent code to the block after the loop
-    builder.SetInsertPoint(afterBB);
-
-    return nullptr;
-}
-
 // Handle VariableDefNodes and allocate memory for the variable
 llvm::Value *CodeGenerator::generateCodeForVariableDef(VariableDefNode *node)
 {
     // Determine data type
     llvm::Type *type;
+    llvm::Value *defaultValue;
     if (node->data_type == "int")
     {
         type = llvm::Type::getInt32Ty(context);
+        defaultValue = llvm::ConstantInt::get(type, 0);
     }
     else if (node->data_type == "float")
     {
         type = llvm::Type::getFloatTy(context);
+        defaultValue = llvm::ConstantFP::get(type, 0.0);
     }
     else
     {
@@ -253,6 +190,7 @@ llvm::Value *CodeGenerator::generateCodeForVariableDef(VariableDefNode *node)
     // Allocate memory of the variable
     llvm::Value *alloc = builder.CreateAlloca(type, 0, node->var_name.c_str());
     namedValues[node->var_name] = alloc;
+    identifierToValue[node->var_name] = defaultValue;
     return alloc;
 }
 
@@ -271,17 +209,47 @@ llvm::Value *CodeGenerator::generateCodeForLiteral(LiteralNode *node)
     }
 }
 
-// Handle AsisgnmentNodes
-// Generate LLVM IR for the left-hand side and right-hand side children of the assignment
 llvm::Value *CodeGenerator::generateCodeForAssignment(AssignmentNode *node)
 {
-    llvm::Value *left = generateCodeForNode(node->children[0]);
+    // Generate LLVM IR for both sides of the assignment
     llvm::Value *right = generateCodeForNode(node->children[1]);
+    llvm::Value *left = generateCodeForNode(node->children[0]);
 
-    VariableDefNode *var_node = static_cast<VariableDefNode *>(node->children[0]);
-    identifierToValue[var_node->var_name] = right;
+    // Determine the type of the variable
+    llvm::AllocaInst *left_alloc = nullptr;
+    std::string name;
 
-    builder.CreateStore(right, left);
+    if (auto *leftIdentifier = dynamic_cast<VariableDefNode *>(node->children[0]))
+    {
+        // Use the name to get the allocated memory from the map
+        if (namedValues.count(leftIdentifier->var_name))
+        {
+            left_alloc = llvm::dyn_cast<llvm::AllocaInst>(namedValues[leftIdentifier->var_name]);
+            name = leftIdentifier->var_name;
+        }
+    }
+    else if (auto *leftIdentifier = dynamic_cast<IdentifierNode *>(node->children[0]))
+    {
+        // Use the name to get the allocated memory from the map
+        if (namedValues.count(leftIdentifier->name))
+        {
+            left_alloc = llvm::dyn_cast<llvm::AllocaInst>(namedValues[leftIdentifier->name]);
+            name = leftIdentifier->name;
+        }
+    }
+
+    if (!left_alloc)
+    {
+        std::cerr << "Error: Variable not found or invalid type.\n";
+        return nullptr;
+    }
+
+    // Store the new value back into the variable
+    builder.CreateStore(right, left_alloc);
+
+    // Update the value in identifierToValue map
+    identifierToValue[name] = right;
+
     return right;
 }
 
@@ -319,8 +287,23 @@ llvm::Value *CodeGenerator::generateCodeForArithmic(ArithmicNode *node)
     llvm::Value *left = generateCodeForNode(node->children[0]);
     llvm::Value *right = generateCodeForNode(node->children[1]);
 
+    // If left is an IdentifierNode, fetch its associated literal value
+    if (auto *leftIdentifier = dynamic_cast<IdentifierNode *>(node->children[0]))
+    {
+        if (identifierToValue.count(leftIdentifier->name))
+            left = identifierToValue[leftIdentifier->name];
+    }
+
+    // If right is an IdentifierNode, fetch its associated literal value
+    if (auto *rightIdentifier = dynamic_cast<IdentifierNode *>(node->children[1]))
+    {
+        if (identifierToValue.count(rightIdentifier->name))
+            right = identifierToValue[rightIdentifier->name];
+    }
+
     if (!left || !right)
     {
+        std::cerr << "Null value encountered in arithmetic operation.\n";
         return nullptr;
     }
 

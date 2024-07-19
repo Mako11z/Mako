@@ -33,6 +33,8 @@ private:
     llvm::Value *generateCodeForAssignment(AssignmentNode *node);
     llvm::Value *generateCodeForArithmic(ArithmicNode *node);
     llvm::Value *generateCodeForIdentifier(IdentifierNode *node);
+    llvm::Value *combineConditions(const std::vector<ASTNode *> &conditions,
+                                   const std::vector<std::string> &logicalOps);
 };
 
 #endif
