@@ -4,9 +4,12 @@ Mako is a compiler for a new language that blends the readability of Python synt
 
 ## Features
 
-Familiar Python-like syntax: Mako leverages familiar Python keywords and operators for control flow, variable declaration, and expressions.
-C++ Code Generation: The compiler translates Mako code into optimized C++ code, allowing you to harness the performance benefits of C++.
-Logical and Arithmetic Operations: Currently, Mako supports basic logical operators (and, or) and arithmetic operations (+, -, *, /).
+Familiar Python-like syntax: 
+* Mako leverages familiar Python keywords and operators for control flow, variable declaration, and expressions.
+C++ Code Generation:
+* The compiler translates Mako code into optimized C++ code, allowing you to harness the performance benefits of C++.
+Logical and Arithmetic Operations:
+* Currently, Mako supports basic logical operators (and, or) and arithmetic operations (+, -, *, /).
 Getting Started
 
 ## Code snippet
