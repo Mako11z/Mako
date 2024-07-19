@@ -1,4 +1,4 @@
-Mako: A Compiler for a Python-inspired C++ Language
+# Mako: A Compiler for a Python-inspired C++ Language
 
 Mako is a compiler for a new language that blends the readability of Python syntax with the power and performance of C++. It allows you to write code that is both easy to understand and highly efficient.
 
